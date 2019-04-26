@@ -1,0 +1,278 @@
+/* 
+TODO:
+  Update the schedule remiders for renwal option DONE
+  Highlighting DONE
+  Popup for check in. DONE
+  Popup confirm for check out. DONE
+* Sheet sorting - https://stackoverflow.com/questions/35563652/automatic-sorting-on-sheets
+* https://www.extendoffice.com/documents/excel/4707-google-sheets-count-number-of-occurrence.html
+* historical log -> # occurances top 5-10 books
+  email reminder inscript DONE
+* public facing 
+* dynamic fields
+* google calendar add
+* google calendar notification for 1 week prior and 2 days prior. https://developers.google.com/apps-script/reference/calendar/calendar-event
+*/
+
+function myFunction() {  
+  var changelogSheetName = "Checked Out Items History.";
+  var mains = "REMOVED Check Out";
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+  var cell = sheet.getActiveCell();
+  var sheetName = sheet.getName();
+
+  var datenow = new Date();
+  var changelogSheet = ss.getSheetByName(changelogSheetName);
+  var copyfrom = ss.getSheetByName(mains);
+  
+  if (cell.getColumn() == 1 & cell.getRow() > 2)
+  {
+    var ui = SpreadsheetApp.getUi(); // Used for both if conditions.
+    if(cell.getValue() == 1){
+      name = ui.prompt('Enter the Students name:',ui.ButtonSet.OK);
+      copyfrom.getRange(cell.getRow(), 5,1,1).setValue(name.getResponseText());
+  
+      emerzadd = ui.prompt('Enter the Students E-Mail:',ui.ButtonSet.OK);
+      copyfrom.getRange(cell.getRow(), 6,1,1).setValue(emerzadd.getResponseText());
+
+      gammynum = ui.prompt('Enter the Students G-Number:',ui.ButtonSet.OK);
+      copyfrom.getRange(cell.getRow(), 7,1,1).setValue(gammynum.getResponseText());
+
+      var outdate = datenow;
+      copyfrom.getRange(cell.getRow(), 4,1,1).setValue(outdate);   //sets current date
+
+      var data1 = copyfrom.getRange(cell.getRow(),1,1,12).getValues(); // pickup newly entered data for history log
+      data1[0].unshift(datenow);  // add timedate to array to be written   
+      changelogSheet.appendRow(data1[0] );  //write the row to the history log
+      }
+      else if (cell.getValue() == 0)      //if check box gets unchecked, delete student data from working library
+      {
+        var erase = ui.alert('Are you sure you want to check the book back in?',ui.ButtonSet.YES_NO)
+        if (erase == ui.Button.YES){
+            copyfrom.getRange(cell.getRow(),4,1,5).clearContent().clearNote();
+        } else {
+             copyfrom.getRange(cell.getRow(), 1,1,1).setValue('TRUE');
+        }      
+      }                 
+   }
+}
+
+function scheduledreminder(){
+  var qrclogoURL = "https://www.pcc.edu/queer/wp-content/uploads/sites/25/2018/06/QRC-wide-500x500.png";
+  var qrclogoBLOB = UrlFetchApp
+                         .fetch(qrclogoURL)
+                         .getBlob()
+                         .setName("qrclogoBLOB");
+    
+  var checkedout = "Currently Checked Out Materials";
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+  var cell = sheet.getActiveCell();
+  var sheetName = sheet.getName();
+  var checkme = ss.getSheetByName(checkedout);
+  var Sheet8 = ss.getSheetByName('Sheet8');
+  
+  data5 = checkme.getRange(3,1,checkme.getRange("B1:B500").getLastRow()-2,10).getValues();
+  
+  for (var xx = 0; xx < data5.length; xx++){
+    var datdata = data5[xx];
+    
+    var daysod = datdata[1];
+    var duedate = datdata[2];
+    var checkdate = datdata[3];
+    var namey = datdata[4];
+    var emil = datdata[5];
+    var booknem = datdata[9];
+    var frequency = new Date();
+    frequency -= duedate;
+  //  Sheet8.appendRow(datdata); //Copy checked out items to page sheet 8 for debugging reasons.
+    
+    subjectline = 'Materials due: ' + booknem;
+    if (daysod >= 13.5 && (daysod % 7 > 0 && daysod % 7 < 1)) {
+      MailApp.sendEmail({
+        to: emil, 
+        subject: subjectline,
+        htmlBody: "<h1><strong>QRC Library Materials Overdue</strong></h1>" +
+        "<p><strong>Hi " + namey + ",<p>" + 
+        "We hope you had time to enjoy the media: " + booknem + " which you checked out on " + 
+        Utilities.formatDate(checkdate, 'America/ Portland', 'EEE, MMM d, \'\'yy') + 
+        ". It is now "+ Math.round(daysod) +" days overdue, and was due back on " + Utilities.formatDate(duedate, 'America/ REMOVED', 'EEE, MMM d, \'\'yy') + 
+        ". If you have already returned the media, disregard this message. </strong></p> " +
+        "<h4><strong>If you have not yet brought it back to the REMOVED, located in <span style=\"color: #ff6600;\">room " +
+        "REMOVED</span>, please do so at your earliest convenience. You may check " +
+        "the material in with any advocate that is currently on shift.</strong></h4>" +
+        " <p><strong>Thanks for helping us keep our library accessible to everyone. Have a great day and we hope you continue " +
+        "to enjoy our library.</strong></p> " +
+        "<p><strong>Phone: REMOVED</strong></p> "+
+        "<p><strong>Email: REMOVED&nbsp;</strong></p>" +
+        "<p><strong>Open Monday-Thursday during Fall, Winter, and Spring Terms.</strong></p>" +
+        "<p><strong>Mon: 10am-5pm&nbsp;</strong><br /><strong>Tues:&nbsp;10am-5pm</strong><br /><strong>Wed:&nbsp;10am-2pm</strong><br /><strong>Thurs:&nbsp;10am-6pm</strong><br /><strong>Fri:&nbsp;Closed</strong></p>" +
+        "<p><strong>Summer Term:&nbsp;available by appointment</strong></p>" +
+        "<p><strong>The QRC is closed during finals week and breaks between terms.</strong></p>" +
+        "<p>&nbsp;</p> <p><p><strong>Sincerely,</strong></p> <p><strong>" +
+        "REMOVED</strong></p> <p><p><img src='cid:qrcLOGO'>",
+        inlineImages:
+          {
+           qrcLOGO: qrclogoBLOB
+          }
+      });            
+    }
+  }
+}
+
+/* 
+APPENDIX OF SHEET FUNCTIONS:
+QRC Check Out:
+   Days Out:
+     =if($D3,now()-$D3,"0")
+     // check if item is checked out, then subtract todays date, from checkout date, if not checked 
+     //out, report a zero.
+
+   Due Date: 
+     =if(H3,D3+28,if(D3,D3+14,"AVAILABLE"))
+     // checking if item is renewed, and if so add 28 days to the check out date, if its not remewed, 
+     //check if its checked out, and add 14 days to the checkout date
+
+Currently Checked Out Materials:
+   OD:
+     =if(B3,if( and($B3 >= 14 , $H3 = FALSE) ,"YES",if( and( $B3 >= 28, $H3 = TRUE), "YES", "NO")),"")
+     // if there is nothing in b3, ie nothing on that row, then report a blank, if there is something, 
+     //check if the days overdue are equal or greater to 14 AND the item is not renewed, report overdue 
+     //if this is true, if its not true, check if the item is equal or more than 28 days out, and if 
+     //renewal is check, if those both are true, report overdue
+     
+   Main Function:
+     =FILTER( 'QRC Check Out'!$B$3:$M$500 , 'QRC Check Out'!$A$3:$A$500 = TRUE )
+     // the first value is the span of which is delivered, and the second value is what is evaluated, 
+     //so if its true, ie checked out, it takes all the values from that row and puts it on the checked out sheet.
+*/
+
+
+/* 
+RESOURCES USED (no particular order):
+1 https://html-online.com/editor/
+https://www.pcc.edu/queer/sylvania/
+https://developers.google.com/apps-script/reference/calendar/calendar-event
+https://developers.google.com/apps-script/guides/services/authorization
+https://support.google.com/docs/forum/AAAABuH1jm0Ujpf-tJQrCs/?hl=en&msgid=-6uY3F5kR9UJ&gpf=d/msg/docs/Ujpf-tJQrCs/-6uY3F5kR9UJ
+https://stackoverflow.com/questions/19004774/popup-authorization-code-documentapp-google-apps-script
+https://developers.google.com/apps-script/guides/triggers/installable#managing_triggers_programmatically
+https://developers.google.com/sheets/api/guides/concepts
+https://stackoverflow.com/questions/18840885/google-script-error/19853912
+https://developers.google.com/apps-script/reference/script/script-app#newTrigger(String)
+https://stackoverflow.com/questions/36178369/how-to-include-inline-images-in-email-using-mailapp
+https://stackoverflow.com/questions/10699726/escaping-characters-in-javascript-single-and-double-quotes
+https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html
+http://patorjk.com/software/taag/#p=display&f=Doh&t=yeet%20the%20patriarchy
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join
+https://developers.google.com/apps-script/articles/sending_emails
+https://developers.google.com/apps-script/guides/dialogs
+https://developers.google.com/apps-script/guides/triggers/installable
+https://developers.google.com/apps-script/reference/base/browser
+https://developers.google.com/apps-script/reference/mail/mail-app
+https://developers.google.com/apps-script/reference/script/clock-trigger-builder
+https://developers.google.com/apps-script/reference/spreadsheet/range#clearNote()
+https://developers.google.com/apps-script/reference/spreadsheet/sheet#appendRow(Object)
+https://developers.google.com/apps-script/reference/spreadsheet/sheet#getDataRange()
+https://stackoverflow.com/questions/11334296/google-sheet-script-set-cell-value
+https://stackoverflow.com/questions/11947590/sheet-getrange1-1-1-12-what-does-the-numbers-in-bracket-specify
+https://stackoverflow.com/questions/41383415/copy-and-past-multiple-rows-ljava-lang-object-response
+https://stackoverflow.com/questions/45155847/google-script-project-trigger-not-running/45157034#45157034
+https://stackoverflow.com/questions/51068726/set-value-of-checkbox
+https://stackoverflow.com/questions/9268570/i-need-a-button-to-clear-cells-in-a-google-spreadsheet
+https://support.google.com/docs/answer/3094140?hl=en
+https://support.google.com/docs/forum/AAAABuH1jm08lc5kRzvdY8/?hl=en&msgid=DQAegY4rAwAJ&gpf=d/msg/docs/8lc5kRzvdY8/DQAegY4rAwAJ
+https://webapps.stackexchange.com/questions/89063/how-to-include-multiple-if-statements-in-one-cell-in-google-sheets/89068
+https://www.benlcollins.com/spreadsheets/vlookup-multiple-criteria/
+https://www.extendoffice.com/documents/excel/4742-google-sheets-vlookup-multiple-values.html
+https://www.portent.com/blog/analytics/google-app-script-1.htm
+https://www.w3schools.com/js/js_arrays.asp
+https://www.w3schools.com/jsref/jsref_unshift.asp
+https://stackoverflow.com/questions/21679267/length-of-two-dimensional-array-in-javascript-google-apps-script
+https://developers.google.com/apps-script/guides/support/best-practices
+https://stackoverflow.com/questions/15664696/minus-equals-in-javascript-what-does-it-mean
+https://www.wikihow.tech/Pull-Data-from-Another-Sheet-on-Google-Sheets-on-PC-or-Mac
+https://support.google.com/docs/forum/AAAABuH1jm0lUGZ108vh-E/?hl=en&gpf=%23!topic%2Fdocs%2FlUGZ108vh-E
+https://www.benlcollins.com/spreadsheets/conditional-formatting-entire-row/
+https://www.w3schools.com/js/js_arithmetic.asp
+*/
+
+
+/* MAWLxEE made dis! Please 2 enjoy, okay?
+
+ ███▄ ▄███▓    ▄▄▄          █     █░    ██▓       ▒██   ██▒   ▓█████    ▓█████ 
+▓██▒▀█▀ ██▒   ▒████▄       ▓█░ █ ░█░   ▓██▒       ▒▒ █ █ ▒░   ▓█   ▀    ▓█   ▀ 
+▓██    ▓██░   ▒██  ▀█▄     ▒█░ █ ░█    ▒██░       ░░  █   ░   ▒███      ▒███   
+▒██    ▒██    ░██▄▄▄▄██    ░█░ █ ░█    ▒██░        ░ █ █ ▒    ▒▓█  ▄    ▒▓█  ▄ 
+▒██▒   ░██▒    ▓█   ▓██▒   ░░██▒██▓    ░██████▒   ▒██▒ ▒██▒   ░▒████▒   ░▒████▒
+░ ▒░   ░  ░    ▒▒   ▓▒█░   ░ ▓░▒ ▒     ░ ▒░▓  ░   ▒▒ ░ ░▓ ░   ░░ ▒░ ░   ░░ ▒░ ░
+░  ░      ░     ▒   ▒▒ ░     ▒ ░ ░     ░ ░ ▒  ░   ░░   ░▒ ░    ░ ░  ░    ░ ░  ░
+░      ░        ░   ▒        ░   ░       ░ ░       ░    ░        ░         ░   
+       ░            ░  ░       ░           ░  ░    ░    ░        ░  ░      ░  ░
+                                                                               
+               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+               |h|e|l|l|o|m|o|t|o|1|1|2|3|@|g|m|a|i|l|.|c|o|m|
+               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+               |                                             |
+               |   This legacy project is dedicated to the   | 
+               |   QRC & was inspired by and in tribute to   |
+               |     Alisha W for Her work in initially      |
+               |  catalogging all of the QRC library media.  |
+               |                                             |  
+               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+     
+*/
+
+
+
+/*
+function onOpen(){
+  ScriptApp.newTrigger('myFunction')
+    .forSpreadsheet('17KR_Ap98eGmgbiihNlAD3YtGneWgYaWEfzs4F4BkR-Y')
+    .onEdit()
+    .create();
+  
+  ScriptApp.newTrigger('scheduledreminder')
+      .timeBased()
+      .onWeekDay(ScriptApp.WeekDay.MONDAY)
+      .atHour(1)
+      .create();
+}
+*/
+
+/*
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  if(!UserProperties.getProperty('author')){
+    ui.createMenu('Custom Menu')
+    .addItem("Authorize this app", 'authorize')
+    .addToUi();
+    var html = HtmlService.createHtmlOutputFromFile('index1')
+    .setTitle("Install Menu").setWidth(400);
+    ui.showSidebar(html);
+  }else{
+    ui.createMenu('Custom Menu')
+    .addItem("Do something", 'doIt')
+    .addToUi();
+    var html = HtmlService.createHtmlOutputFromFile('index2')
+    .setTitle("Mailmerge Menu").setWidth(400);
+    ui.showSidebar(html);
+  }
+}
+
+
+function authorize(){
+  SpreadsheetApp.openById('17KR_Ap98eGmgbiihNlAD3YtGneWgYaWEfzs4F4BkR-Y');
+  UserProperties.setProperty('author','yes');
+  var ui = SpreadsheetApp.getUi();
+  var html = HtmlService.createHtmlOutput('Authorization complete<br>Thanks<br><br>please refresh your browser').setTitle("Confirmation").setWidth(400);
+  ui.showSidebar(html);
+}
+
+function doIt(){
+  //
+}
+
+
+*/
