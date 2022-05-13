@@ -2,6 +2,10 @@
 
 This is a library checkout system for the Resource center that I work in. We deployed it using google sheets. It makes use of scripts, formulas, and web deployed front end. 
 
+	Example of the system at work (note: scripts will not function unless you authorize them, process outlined below): https://docs.google.com/spreadsheets/d/e/2PACX-1vToHYPEfegbVLr7w4bArrn-qZaUo-HLNEbnLlxWvoq6FkP5ORrUawVTfU3sQ8L96WC9kep4kqAVHn3h/pubhtml?gid=367261891&single=true
+
+	Example of a public access list of materials available to checkout/rent: https://docs.google.com/spreadsheets/d/e/2PACX-1vToHYPEfegbVLr7w4bArrn-qZaUo-HLNEbnLlxWvoq6FkP5ORrUawVTfU3sQ8L96WC9kep4kqAVHn3h/pubhtml?gid=367261891&single=true
+
 Installing the library checkout system is a 5 step process. Each step is broken down into step by step installation instructions. 
 
 It is important that every step is completedy fully. 
